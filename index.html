@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>ST GET MAIL - Advanced</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    
+   <script src='//libtl.com/sdk.js' data-zone='10169742' data-sdk='show_10169742'></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#D90429", // Main Red
+                        "background-light": "#F0F3F5", // Light Background
+                        "card-light": "#FFFFFF", // Light Card/Surface
+                        "background-dark": "#0A0A0A", // Dark Background (More intense)
+                        "card-dark": "#1A1A1A", // Dark Card/Surface
+                        "text-light": "#1F2937", 
+                        "text-light-secondary": "#6B7280", 
+                        "text-dark": "#F9FAFB", 
+                        "text-dark-secondary": "#9CA3AF", 
+                        "border-light": "#E5E7EB",
+                        "border-dark": "#374151",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.75rem", // Standard rounding
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    keyframes: {
+                        toastIn: { '0%': { transform: 'translateY(100%)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+                        toastOut: { '0%': { transform: 'translateY(0)', opacity: '1' }, '100%': { transform: 'translateY(100%)', opacity: '0' } },
+                        spin: { to: { transform: 'rotate(360deg)' } },
+                        pulse: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0.5' } } // For skeleton loading
+                    },
+                    animation: {
+                        toastIn: 'toastIn 0.3s ease-out forwards',
+                        toastOut: 'toastOut 0.3s ease-in forwards',
+                        spin: 'spin 1s linear infinite',
+                        pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                },
+            },
+        }
+    </script>
+    
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+        
+        body {
+            @apply bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Custom style for the email body to render links and basic formatting */
+        #email-detail-body a {
+            color: #D90429; /* Primary color */
+            text-decoration: underline;
+        }
+        #email-detail-body p {
+            margin-bottom: 1rem;
+        }
+
+        /* Hide scrollbars */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+
+        /* Loading spinner for buttons */
+        .spinner {
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            width: 1.25rem;
+            height: 1.25rem;
+            animation: spin 1s linear infinite;
+        }
+        .spinner-dark {
+             border-color: rgba(217, 4, 41, 0.3); /* primary/30 */
+             border-top-color: #D90429; /* primary */
+        }
+        
+        /* Loading Text Animation */
+        .loading-dot {
+            animation: bounce 1.4s infinite ease-in-out both;
+            display: inline-block;
+        }
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark">
+
+    <div id="initially-loading-screen" class="fixed inset-0 flex h-full w-full flex-col items-center justify-center p-8 bg-card-light dark:bg-background-dark z-[100]">
+        <div class="flex flex-col items-center justify-center text-center">
+            <h1 class="text-text-light dark:text-text-dark tracking-tight text-5xl font-bold leading-tight mb-4">
+                <span class="text-primary">ST</span> GET MAIL
+            </h1>
+            <div class="flex space-x-2">
+                <div class="loading-dot w-3 h-3 bg-primary rounded-full"></div>
+                <div class="loading-dot w-3 h-3 bg-primary rounded-full"></div>
+                <div class="loading-dot w-3 h-3 bg-primary rounded-full"></div>
+            </div>
+            <p id="loading-status" class="mt-6 text-sm text-text-light/70 dark:text-text-dark-secondary">
+                Preparing your private session...
+            </p>
+        </div>
+    </div>
+
+    <div id="get-email-screen" class="hidden flex min-h-screen w-full flex-col p-4 sm:p-6">
+        <header class="flex w-full items-center justify-between pb-6">
+            <div class="w-10"></div> 
+            <h1 class="text-2xl font-bold tracking-tight text-center">
+                <span class="text-primary">ST</span> GET MAIL
+            </h1>
+            <button id="dark-mode-toggle" class="flex h-10 w-10 items-center justify-center rounded-full bg-card-light dark:bg-card-dark shadow-md text-text-light/80 dark:text-text-dark/80 hover:ring-2 hover:ring-primary/50 transition">
+            </button>
+        </header>
+        
+        <main class="flex flex-1 flex-col items-center justify-center gap-8 text-center">
+            <div class="max-w-md w-full">
+                <div class="rounded-xl bg-card-light p-8 dark:bg-card-dark shadow-xl border border-border-light dark:border-border-dark/50 mb-6">
+                    <span class="material-symbols-outlined text-6xl text-primary mb-4">mail</span>
+                    <h2 class="text-2xl font-bold mb-2">Get Your Temporary Email</h2>
+                    <p class="text-text-light/70 dark:text-text-dark-secondary mb-6">Watch a short ad to get your private temporary email address that lasts for 10 minutes</p>
+                    
+                    <button id="get-email-btn" class="flex h-[50px] w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-lg font-bold text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 transition hover:bg-red-700">
+                        <span class="material-symbols-outlined text-xl">play_circle</span>
+                        <span>Watch Ad & Get Email</span>
+                    </button>
+                </div>
+                
+                <div class="rounded-xl bg-card-light p-5 dark:bg-card-dark shadow-xl border border-border-light dark:border-border-dark/50">
+                    <h3 class="font-bold mb-3 text-lg">Features</h3>
+                    <div class="space-y-3 text-left">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">lock</span>
+                            <span class="text-sm">100% Anonymous & Private</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">schedule</span>
+                            <span class="text-sm">10 Minute Lifetime</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">ads_click</span>
+                            <span class="text-sm">Extend with Ads</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="home-screen" class="hidden flex min-h-screen w-full flex-col p-4 sm:p-6">
+        <header class="flex w-full items-center justify-between pb-6">
+            <div class="w-10"></div> 
+            <h1 class="text-2xl font-bold tracking-tight text-center">
+                <span class="text-primary">ST</span> GET MAIL
+            </h1>
+            <button id="dark-mode-toggle-home" class="flex h-10 w-10 items-center justify-center rounded-full bg-card-light dark:bg-card-dark shadow-md text-text-light/80 dark:text-text-dark/80 hover:ring-2 hover:ring-primary/50 transition">
+            </button>
+        </header>
+        
+        <main class="flex flex-1 flex-col gap-5">
+            <div class="rounded-xl bg-card-light p-5 dark:bg-card-dark shadow-xl border border-border-light dark:border-border-dark/50">
+                <p class="mb-2 text-sm font-medium text-text-light/70 dark:text-text-dark-secondary">Your Anonymous Mailbox 🔒</p>
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-2xl text-primary shrink-0">alternate_email</span>
+                    <p id="email-display" class="flex-1 truncate text-lg font-bold">loading...</p>
+                    <button id="copy-btn" class="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-white shadow-lg shadow-primary/30 hover:shadow-primary/50 transition">
+                        <span id="copy-icon" class="material-symbols-outlined text-base">content_copy</span>
+                        <span id="copy-text">Copy</span>
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-5">
+                    <button id="change-mail-btn" class="flex h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-primary py-2 text-sm font-bold text-white transition hover:bg-red-700">
+                        <span class="material-symbols-outlined text-xl">autorenew</span>
+                        <span>Change Mail (Ad)</span>
+                    </button>
+                    <button id="extend-timer-btn" class="flex items-center justify-center gap-2 rounded-lg border border-primary/50 bg-transparent px-4 py-2 font-medium text-primary hover:bg-primary/10 transition">
+                        <span class="material-symbols-outlined">timer</span>
+                        Extend (Ad)
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between gap-4 rounded-xl bg-card-light p-5 dark:bg-card-dark shadow-xl border border-border-light dark:border-border-dark/50">
+                <div class="flex flex-col">
+                    <p class="text-sm text-text-light/70 dark:text-text-dark-secondary">Email Lifetime Remaining</p>
+                    <p id="timer-display" class="text-3xl font-extrabold text-primary transition-colors">--:--</p>
+                </div>
+                <div id="status-badge" class="flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold bg-green-500/20 text-green-600 dark:bg-green-400/20 dark:text-green-400">
+                    <span class="material-symbols-outlined text-base">verified</span>
+                    <span>Active</span>
+                </div>
+            </div>
+            
+            <div class="flex flex-1 flex-col overflow-hidden rounded-xl bg-card-light shadow-xl dark:bg-card-dark border border-border-light dark:border-border-dark/50">
+                <div class="flex items-center justify-between border-b border-border-light p-4 dark:border-border-dark">
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-xl font-bold">Inbox</h2>
+                        <div id="inbox-count-badge" class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-white shadow-md">0</div>
+                    </div>
+                    <button id="refresh-inbox-btn" class="flex h-10 w-10 items-center justify-center rounded-full text-text-light/70 hover:bg-background-light dark:text-text-dark/70 dark:hover:bg-background-dark transition">
+                        <span class="material-symbols-outlined">refresh</span>
+                    </button>
+                </div>
+                
+                <div id="inbox-list-container" class="flex-1 space-y-1 overflow-y-auto p-2 no-scrollbar">
+                    <div id="inbox-empty-state" class="flex h-full flex-col items-center justify-center p-8 text-center">
+                        <span class="material-symbols-outlined text-6xl text-text-light/30 dark:text-text-dark/30">inbox</span>
+                        <p class="mt-3 font-semibold text-text-light/80 dark:text-text-dark/80">Your inbox is empty</p>
+                        <p class="text-sm text-text-light/60 dark:text-text-dark-secondary">Waiting for incoming emails...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="email-detail-screen" class="hidden relative flex h-full min-h-screen w-full flex-col bg-card-light dark:bg-card-dark">
+        <header class="flex items-center justify-between p-4 sticky top-0 z-10 bg-card-light/80 dark:bg-card-dark/80 backdrop-blur-sm shadow-md">
+            <button id="email-detail-back" class="flex size-10 items-center justify-center rounded-full text-text-light dark:text-text-dark hover:bg-background-light dark:hover:bg-background-dark transition">
+                <span class="material-symbols-outlined text-2xl">arrow_back</span>
+            </button>
+            <h1 class="text-lg font-bold truncate">Email Details</h1>
+            <div class="w-10"></div> 
+        </header>
+        
+        <main class="flex-1 flex-col overflow-y-auto no-scrollbar">
+            <div class="p-5">
+                <div class="mb-6 flex flex-col gap-1 border-b border-border-light dark:border-border-dark pb-6">
+                    <h2 id="email-detail-subject" class="text-2xl font-bold text-text-light dark:text-text-dark"></h2>
+                    <div class="flex items-center gap-3 pt-4">
+                        <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <span id="email-detail-sender-initial" class="text-xl font-bold"></span>
+                        </div>
+                        <div class="flex flex-col overflow-hidden">
+                            <p id="email-detail-sender" class="font-bold text-text-light dark:text-text-dark truncate"></p>
+                            <p id="email-detail-timestamp" class="text-sm text-text-light-secondary dark:text-text-dark-secondary"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="email-detail-body" class="flex-1 text-base leading-relaxed text-text-light-secondary dark:text-text-dark-secondary">
+                    </div>
+            </div>
+        </main>
+
+        <footer class="sticky bottom-0 z-10 bg-card-light/80 dark:bg-card-dark/80 p-4 backdrop-blur-sm shadow-inner dark:shadow-black/50">
+            <div class="flex w-full flex-col items-stretch gap-3">
+                <button id="email-detail-delete" class="flex h-12 w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-xl bg-primary text-white text-base font-bold transition hover:bg-red-700">
+                    <span class="material-symbols-outlined">delete</span>
+                    <span>Delete Message</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+    
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden w-11/12 max-w-sm rounded-lg bg-primary p-4 text-white shadow-xl text-center font-medium">
+        <span id="toast-message"></span>
+    </div>
+
+    <script type="module">
+        // API Base URL: https://api.mail.tm
+        const API_BASE_URL = "https://api.mail.tm";
+        const PERSISTENCE_KEY = "arTempMailData";
+        const EXPIRY_TIMESTAMP_KEY = "arTempMailExpiryTimestamp";
+        const INITIAL_DURATION = 600; // 10 minutes in seconds
+        const EXTEND_DURATION = 1800; // 30 minutes in seconds
+
+        // --- State ---
+        let currentEmailData = null; 
+        let inboxMessages = [];
+        let timerInterval = null;
+        let inboxCheckInterval = null;
+
+        // --- DOM Elements ---
+        const initialLoadingScreen = document.getElementById("initially-loading-screen");
+        const loadingStatus = document.getElementById("loading-status");
+        const getEmailScreen = document.getElementById("get-email-screen");
+        const homeScreen = document.getElementById("home-screen");
+        const emailDetailScreen = document.getElementById("email-detail-screen");
+        
+        // Get Email Screen
+        const getEmailBtn = document.getElementById("get-email-btn");
+        
+        // Home
+        const darkModeToggle = document.getElementById("dark-mode-toggle");
+        const darkModeToggleHome = document.getElementById("dark-mode-toggle-home");
+        const changeMailBtn = document.getElementById("change-mail-btn");
+        const emailDisplay = document.getElementById("email-display");
+        const copyBtn = document.getElementById("copy-btn");
+        const copyIcon = document.getElementById("copy-icon");
+        const copyText = document.getElementById("copy-text");
+        const timerDisplay = document.getElementById("timer-display");
+        const extendTimerBtn = document.getElementById("extend-timer-btn");
+        const inboxCountBadge = document.getElementById("inbox-count-badge");
+        const refreshInboxBtn = document.getElementById("refresh-inbox-btn");
+        const inboxListContainer = document.getElementById("inbox-list-container");
+        const inboxEmptyState = document.getElementById("inbox-empty-state");
+        const statusBadge = document.getElementById("status-badge");
+        
+        // Detail
+        const detailBackBtn = document.getElementById("email-detail-back");
+        const detailSubject = document.getElementById("email-detail-subject");
+        const detailSenderInitial = document.getElementById("email-detail-sender-initial");
+        const detailSender = document.getElementById("email-detail-sender");
+        const detailTimestamp = document.getElementById("email-detail-timestamp");
+        const detailBody = document.getElementById("email-detail-body");
+        const detailDeleteBtn = document.getElementById("email-detail-delete");
+
+        // Toast
+        const toast = document.getElementById("toast");
+        const toastMessage = document.getElementById("toast-message");
+
+        // --- Persistence & Timer Functions ---
+        
+        function loadState() {
+            try {
+                const data = localStorage.getItem(PERSISTENCE_KEY);
+                if (data) {
+                    currentEmailData = JSON.parse(data);
+                }
+            } catch (e) {
+                console.error("Error loading state:", e);
+                clearState();
+            }
+        }
+
+        function saveState() {
+            if (currentEmailData) {
+                localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(currentEmailData));
+            }
+        }
+
+        function clearState() {
+            localStorage.removeItem(PERSISTENCE_KEY);
+            localStorage.removeItem(EXPIRY_TIMESTAMP_KEY);
+            currentEmailData = null;
+            if (timerInterval) clearInterval(timerInterval);
+            if (inboxCheckInterval) clearInterval(inboxCheckInterval);
+        }
+
+        // --- Timer Control ---
+        
+        function getRemainingTime() {
+            const expiryTimestamp = localStorage.getItem(EXPIRY_TIMESTAMP_KEY);
+            if (!expiryTimestamp) return 0;
+            
+            const now = Math.floor(Date.now() / 1000);
+            const expiry = parseInt(expiryTimestamp, 10);
+            return Math.max(0, expiry - now);
+        }
+
+        function setExpiryTimestamp(durationInSeconds) {
+            const now = Math.floor(Date.now() / 1000);
+            const newExpiry = now + durationInSeconds;
+            localStorage.setItem(EXPIRY_TIMESTAMP_KEY, newExpiry.toString());
+            return newExpiry;
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                updateTimerDisplay();
+            }, 1000);
+            
+            updateTimerDisplay();
+        }
+
+        function resetTimer() {
+            setExpiryTimestamp(INITIAL_DURATION);
+            startTimer();
+            updateStatusBadge(true);
+        }
+
+        function extendTimer() {
+            const currentExpiry = parseInt(localStorage.getItem(EXPIRY_TIMESTAMP_KEY) || "0", 10);
+            const now = Math.floor(Date.now() / 1000);
+            
+            let newExpiry;
+            if (currentExpiry > now) {
+                newExpiry = currentExpiry + EXTEND_DURATION;
+            } else {
+                newExpiry = now + EXTEND_DURATION;
+            }
+            
+            localStorage.setItem(EXPIRY_TIMESTAMP_KEY, newExpiry.toString());
+            startTimer();
+            updateStatusBadge(true);
+            showToast("Timer extended by 30 minutes!");
+        }
+
+        function updateTimerDisplay() {
+            const remainingTime = getRemainingTime();
+            
+            if (remainingTime <= 0) {
+                timerDisplay.textContent = '00:00';
+                timerDisplay.classList.remove('text-primary', 'text-yellow-500');
+                timerDisplay.classList.add('text-red-600');
+                updateStatusBadge(false);
+                
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+                
+                // Show get email screen when timer expires
+                if (currentEmailData) {
+                    showToast("Session expired! Get a new email.", "error");
+                    setTimeout(() => {
+                        showScreen('get-email-screen');
+                    }, 2000);
+                }
+                return;
+            }
+            
+            const minutes = Math.floor(remainingTime / 60).toString().padStart(2, '0');
+            const seconds = (remainingTime % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${minutes}:${seconds}`;
+            
+            if (remainingTime < 120) { 
+                timerDisplay.classList.add('text-yellow-500');
+                timerDisplay.classList.remove('text-primary');
+            } else {
+                timerDisplay.classList.add('text-primary');
+                timerDisplay.classList.remove('text-yellow-500');
+            }
+            
+            updateStatusBadge(remainingTime > 0);
+        }
+
+        function updateStatusBadge(isActive) {
+            if (isActive) {
+                statusBadge.innerHTML = `<span class="material-symbols-outlined text-base">verified</span><span>Active</span>`;
+                statusBadge.className = 'flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold bg-green-500/20 text-green-600 dark:bg-green-400/20 dark:text-green-400';
+            } else {
+                statusBadge.innerHTML = `<span class="material-symbols-outlined text-base">error</span><span>Expired</span>`;
+                statusBadge.className = 'flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold bg-red-500/20 text-red-600 dark:bg-red-400/20 dark:text-red-400';
+            }
+        }
+        
+        // --- Core Application Functions ---
+        
+        async function showAd() {
+            return new Promise((resolve) => {
+                if (typeof window.show_10169742 !== 'function') {
+                    console.warn("Monetag SDK function not found. Simulating ad success.");
+                    setTimeout(() => resolve(true), 1500);
+                    return;
+                }
+                
+                try {
+                    const adPromise = window.show_10169742();
+                    adPromise.then(() => {
+                        setTimeout(() => resolve(true), 1000); 
+                    }).catch((err) => {
+                        console.error('Ad failed:', err);
+                        resolve(false); 
+                    });
+                } catch (err) {
+                    console.error('Ad initiation error:', err);
+                    resolve(false);
+                }
+            });
+        }
+        
+        async function fetchWithTimeout(url, options = {}, timeout = 8000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(id);
+                return response;
+            } catch (err) {
+                clearTimeout(id);
+                if (err.name === 'AbortError') {
+                    throw new Error('Request timed out');
+                }
+                throw err;
+            }
+        }
+
+        async function initApp() {
+            loadingStatus.textContent = "Setting up UI...";
+            setupDarkMode();
+            
+            loadingStatus.textContent = "Checking previous session...";
+            loadState();
+
+            // Check if we have a valid email with time remaining
+            if (currentEmailData && getRemainingTime() > 0) {
+                loadingStatus.textContent = "Restoring active session...";
+                await checkInbox();
+                if (currentEmailData) { 
+                    emailDisplay.textContent = currentEmailData.address;
+                    startTimer();
+                    showScreen('home-screen');
+                    
+                    // Start auto-checking inbox
+                    if (inboxCheckInterval) clearInterval(inboxCheckInterval);
+                    inboxCheckInterval = setInterval(checkInbox, 10000);
+                    return;
+                }
+            }
+            
+            // No valid session found, show get email screen
+            loadingStatus.textContent = "Ready to start...";
+            setTimeout(() => {
+                showScreen('get-email-screen');
+            }, 500);
+        }
+
+        function showScreen(screenId) {
+            initialLoadingScreen.classList.add('hidden');
+            getEmailScreen.classList.add('hidden');
+            homeScreen.classList.add('hidden');
+            emailDetailScreen.classList.add('hidden');
+            
+            document.getElementById(screenId).classList.remove('hidden');
+
+            if (screenId === 'home-screen' && getRemainingTime() > 0) {
+                startTimer();
+            }
+        }
+
+        function randomString(length) {
+            let result = '';
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        async function getNewEmail() {
+            try {
+                clearState();
+                
+                const domainResponse = await fetchWithTimeout(`${API_BASE_URL}/domains`);
+                if (!domainResponse.ok) throw new Error('Failed to get domain');
+                const domains = await domainResponse.json();
+                const domain = domains['hydra:member'][0].domain; 
+
+                const address = `artempmail${randomString(6)}@${domain}`;
+                const password = randomString(12);
+
+                const createResponse = await fetchWithTimeout(`${API_BASE_URL}/accounts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address, password })
+                });
+                if (!createResponse.ok) throw new Error('Failed to create account');
+                const accountData = await createResponse.json();
+                const accountId = accountData.id;
+
+                const tokenResponse = await fetchWithTimeout(`${API_BASE_URL}/token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address, password })
+                });
+                if (!tokenResponse.ok) throw new Error('Failed to get token');
+                const tokenData = await tokenResponse.json();
+                const token = tokenData.token;
+
+                currentEmailData = { accountId, address, token };
+                emailDisplay.textContent = currentEmailData.address;
+                inboxMessages = [];
+                updateInboxUI();
+                resetTimer();
+                saveState();
+                showToast("New email address generated!");
+                return true;
+
+            } catch (err) {
+                console.error("Failed to get new email:", err);
+                showToast(err.message || "Error generating email", "error");
+                return false;
+            }
+        }
+
+        async function checkInbox() {
+            if (!currentEmailData || !currentEmailData.token) return;
+            
+            try {
+                const response = await fetchWithTimeout(`${API_BASE_URL}/messages`, {
+                    headers: { 'Authorization': `Bearer ${currentEmailData.token}` }
+                });
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showToast("Session expired. Getting new email...", "error");
+                        clearState(); 
+                        showScreen('get-email-screen');
+                        return;
+                    }
+                    throw new Error("Failed to check inbox");
+                }
+                
+                const data = await response.json();
+                inboxMessages = data['hydra:member'] || [];
+                updateInboxUI();
+            } catch (err) {
+                console.error("Failed to check inbox:", err);
+            }
+        }
+
+        function updateInboxUI() {
+            inboxCountBadge.textContent = inboxMessages.length;
+            
+            if (inboxMessages.length === 0) {
+                inboxEmptyState.classList.remove('hidden');
+                inboxListContainer.innerHTML = ''; 
+                inboxListContainer.appendChild(inboxEmptyState); 
+                return;
+            }
+            
+            inboxEmptyState.classList.add('hidden');
+            inboxListContainer.innerHTML = ''; 
+            
+            inboxMessages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            inboxMessages.forEach(msg => {
+                const msgElement = document.createElement('div');
+                msgElement.className = "message-item flex flex-col gap-1 rounded-lg p-3 hover:bg-background-light dark:hover:bg-background-dark cursor-pointer transition";
+                msgElement.dataset.id = msg.id;
+                
+                const senderName = msg.from?.name || msg.from?.address || 'Unknown Sender';
+                const previewText = msg.intro ? msg.intro + '...' : 'Click to read message...';
+                const isUnreadClass = msg.seen === false ? 'font-bold' : 'font-medium';
+                const isUnreadDot = msg.seen === false ? '<span class="size-2 rounded-full bg-primary mr-1"></span>' : '';
+
+                msgElement.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            ${isUnreadDot}
+                            <p class="${isUnreadClass} text-sm">${escapeHTML(senderName)}</p>
+                        </div>
+                        <p class="text-xs text-text-light/60 dark:text-text-dark-secondary">${formatDate(msg.createdAt)}</p>
+                    </div>
+                    <p class="${isUnreadClass} text-base truncate">${escapeHTML(msg.subject)}</p>
+                    <p class="truncate text-sm text-text-light/70 dark:text-text-dark-secondary">${escapeHTML(previewText)}</p>
+                `;
+                
+                msgElement.addEventListener('click', () => openEmail(msg.id));
+                inboxListContainer.appendChild(msgElement);
+            });
+        }
+        
+        async function openEmail(messageId) {
+            if (!currentEmailData) return;
+
+            showToast("Loading email...");
+            
+            try {
+                const response = await fetchWithTimeout(`${API_BASE_URL}/messages/${messageId}`, {
+                    headers: { 'Authorization': `Bearer ${currentEmailData.token}` }
+                });
+                if (!response.ok) throw new Error("Failed to load email");
+
+                const data = await response.json();
+                const senderName = data.from?.name || data.from?.address || 'Unknown Sender';
+
+                detailSubject.textContent = data.subject || "(No Subject)";
+                detailSender.textContent = senderName;
+                detailSenderInitial.textContent = senderName[0].toUpperCase();
+                detailTimestamp.textContent = formatDate(data.createdAt, true);
+                
+                detailBody.innerHTML = data.html?.[0] || data.text || "(No content)";
+
+                detailDeleteBtn.dataset.id = messageId;
+                
+                const message = inboxMessages.find(m => m.id === messageId);
+                if (message && message.seen === false) {
+                    message.seen = true;
+                    updateInboxUI();
+                }
+                
+                showScreen('email-detail-screen');
+            } catch (err) {
+                console.error("Failed to open email:", err);
+                showToast("Error loading email", "error");
+            }
+        }
+        
+        function copyToClipboard() {
+            if (!currentEmailData || !currentEmailData.address) return;
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = currentEmailData.address;
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    copyText.textContent = "Copied!";
+                    copyIcon.textContent = "check";
+                    
+                    setTimeout(() => {
+                        copyText.textContent = "Copy";
+                        copyIcon.textContent = "content_copy";
+                    }, 2000);
+                    showToast("Email copied to clipboard!");
+                } else {
+                    showToast("Failed to copy! Try manually.", "error");
+                }
+            } catch (err) {
+                console.error("Fallback copy failed:", err);
+                showToast("Failed to copy! Try manually.", "error");
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function setupDarkMode() {
+            if (localStorage.theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                darkModeToggle.innerHTML = `<span class="material-symbols-outlined">light_mode</span>`;
+                darkModeToggleHome.innerHTML = `<span class="material-symbols-outlined">light_mode</span>`;
+            } else {
+                document.documentElement.classList.remove('dark');
+                darkModeToggle.innerHTML = `<span class="material-symbols-outlined">dark_mode</span>`;
+                darkModeToggleHome.innerHTML = `<span class="material-symbols-outlined">dark_mode</span>`;
+                localStorage.theme = 'light';
+            }
+            
+            darkModeToggle.addEventListener('click', toggleDarkMode);
+            darkModeToggleHome.addEventListener('click', toggleDarkMode);
+        }
+
+        function toggleDarkMode() {
+            if (document.documentElement.classList.toggle('dark')) {
+                localStorage.theme = 'dark';
+                darkModeToggle.innerHTML = `<span class="material-symbols-outlined">light_mode</span>`;
+                darkModeToggleHome.innerHTML = `<span class="material-symbols-outlined">light_mode</span>`;
+            } else {
+                localStorage.theme = 'light';
+                darkModeToggle.innerHTML = `<span class="material-symbols-outlined">dark_mode</span>`;
+                darkModeToggleHome.innerHTML = `<span class="material-symbols-outlined">dark_mode</span>`;
+            }
+        }
+        
+        function showToast(message, type = 'info') {
+            toastMessage.textContent = message;
+            toast.classList.toggle('bg-primary', type === 'info');
+            toast.classList.toggle('bg-red-600', type === 'error');
+            
+            toast.classList.remove('hidden');
+            toast.style.animation = 'toastIn 0.3s ease-out forwards';
+            
+            setTimeout(() => {
+                toast.style.animation = 'toastOut 0.3s ease-in forwards';
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        function formatDate(dateValue, full = false) {
+            try {
+                const date = new Date(dateValue);
+                if (full) {
+                    return date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+                }
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.round(diffMs / 60000);
+                
+                if (diffMins < 1) return "Just now";
+                if (diffMins < 60) return `${diffMins} min ago`;
+                if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+                return date.toLocaleDateString();
+            } catch (e) {
+                return String(dateValue);
+            }
+        }
+        
+        function escapeHTML(str) {
+            if (!str) return "";
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#039;');
+        }
+
+        function showSpinner(button, isDarkSpinner = false) {
+            button.disabled = true;
+            const originalContent = button.innerHTML;
+            button.innerHTML = `<div class="spinner ${isDarkSpinner ? 'spinner-dark' : ''}"></div>`;
+            return () => {
+                button.innerHTML = originalContent;
+                button.disabled = false;
+            };
+        }
+        
+        // --- Event Listeners ---
+        window.addEventListener('load', initApp);
+
+        getEmailBtn.addEventListener('click', async () => {
+            const restore = showSpinner(getEmailBtn);
+            const adSuccess = await showAd(); 
+            if (adSuccess) {
+                await getNewEmail();
+                showScreen('home-screen');
+                
+                // Start inbox checking
+                if (inboxCheckInterval) clearInterval(inboxCheckInterval);
+                inboxCheckInterval = setInterval(checkInbox, 10000);
+            } else {
+                showToast("Ad required to get email. Please try again.", "error");
+            }
+            restore();
+        });
+
+        changeMailBtn.addEventListener('click', async () => {
+            const restore = showSpinner(changeMailBtn);
+            const adSuccess = await showAd(); 
+            if (adSuccess) {
+                 await getNewEmail(); 
+            } else {
+                 showToast("Ad required to change mail. Ad failed.", "error");
+            }
+            restore();
+        });
+
+        copyBtn.addEventListener('click', copyToClipboard);
+
+        extendTimerBtn.addEventListener('click', async () => {
+            if (!currentEmailData) {
+                showToast("Please wait for mail generation to finish.", "error");
+                return;
+            }
+            if (getRemainingTime() <= 0) {
+                 showToast("Cannot extend. Time has expired. Get new mail.", "error");
+                 return;
+            }
+
+            const restore = showSpinner(extendTimerBtn, true); 
+            const adSuccess = await showAd(); 
+            if (adSuccess) {
+                extendTimer(); 
+            } else {
+                showToast("Ad required to extend time. Ad failed.", "error");
+            }
+            restore();
+        });
+
+        refreshInboxBtn.addEventListener('click', () => {
+            showToast("Refreshing inbox...");
+            checkInbox();
+        });
+        
+        // Detail
+        detailBackBtn.addEventListener('click', () => showScreen('home-screen'));
+        
+        detailDeleteBtn.addEventListener('click', async () => {
+            const messageId = detailDeleteBtn.dataset.id;
+            if (!messageId || !currentEmailData) return;
+
+            inboxMessages = inboxMessages.filter(m => m.id !== messageId);
+            updateInboxUI();
+            showScreen('home-screen');
+            showToast("Message deleted!");
+        });
+
+    </script>
+</body>
+</html>
